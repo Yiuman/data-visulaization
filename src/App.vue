@@ -1,28 +1,21 @@
 <template>
     <div id="app">
-        <DragBoard></DragBoard>
+        <router-view class="router"></router-view>
     </div>
 </template>
 
 <script>
-    import DragBoard from './components/DragBoard.vue'
-
     export default {
         name: 'app',
-        components: {
-            DragBoard
-        }
     }
 </script>
 
 <style>
-    #app {
-        font-family: 'Avenir', Helvetica, Arial, sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        text-align: center;
-        color: #2c3e50;
-        margin-top: 60px;
+    body {
+        margin: 0;
+    }
+
+    html, body, #app, .router {
         height: 100%;
     }
 </style>

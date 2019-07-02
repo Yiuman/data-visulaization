@@ -9,10 +9,12 @@
   },
   "dependencies": {
     "core-js": "^2.6.5",
+    "echarts": "^4.2.1",
     "element-ui": "^2.9.2",
     "interactjs": "^1.4.0-rc.13",
+    "v-charts-v2": "^2.0.9",
     "vue": "^2.6.10",
-    "v-charts-v2": "latest"
+    "vue-router": "^3.0.6"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.8.0",
