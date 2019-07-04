@@ -30,6 +30,7 @@
                                      :key="index"
                                      :id="dataVComponent.domId"
                                      :style="dataVComponent.style"
+                                     style="padding: 15px"
                                      :ref="dataVComponent.domId"
                                      :index="index"
                                      :isChartType="dataVComponent.componentName.startsWith('ve')"
@@ -41,9 +42,8 @@
                                     </div>
                                     <component :is="dataVComponent.componentName"
                                                :ref="'chart_'+index"
-                                               :data="dataVComponent.chartData"
-                                               width="100%"
-                                               height="100%"></component>
+                                               v-bind="dataVComponent.data">
+                                    </component>
                                 </div>
                             </div>
                         </div>
@@ -52,7 +52,11 @@
             </el-main>
         </el-container>
 
-        <DataView v-show="isPreview" :dataVStyle="previewStyle" :dataVComponents="dataVComponents" ref="data-view-com"></DataView>
+        <div class="data-view-root" ref="data-view-root" id="data-view-root" v-show="isPreview">
+            <DataView ref="data-view-component" :dataVStyle="previewStyle"
+                      :dataVComponents="dataVComponents"></DataView>
+        </div>
+
     </div>
 
 
@@ -76,14 +80,14 @@
                 dropZoneStyle: {
                     width: '',
                     height: '',
-                    'background-color': '#ccc'
+                    'background-color': '#fff'
                 },
                 //拖拽的数据组件
                 dataVComponents: [],
                 //选中组件的下标
                 selectedIndex: 0,
                 isPreview: false,
-                previewStyle: {}
+                previewStyle: {},
             }
         },
         mounted() {
@@ -110,12 +114,13 @@
             dragenter(event) {
                 event.preventDefault();
                 this.$set(this.dropZoneStyle, 'border-style', 'solid');
-                this.$set(this.dropZoneStyle, 'border-color', '#fff');
+                this.$set(this.dropZoneStyle, 'border-image', 'linear-gradient(#26d9b3,#5a84fd) 30 30 ');
             },
             dragleave(event) {
                 event.preventDefault();
                 this.$set(this.dropZoneStyle, 'border-style', '');
                 this.$set(this.dropZoneStyle, 'border-color', '#aaa');
+                this.$set(this.dropZoneStyle, 'border-image', '');
             },
             dragstart() {
                 this.$set(this.dropZoneStyle, 'border-color', '#aaa');
@@ -123,15 +128,19 @@
             dragend() {
                 this.$set(this.dropZoneStyle, 'border-color', '');
                 this.$set(this.dropZoneStyle, 'border-style', 'dashed');
+                this.$set(this.dropZoneStyle, 'border-image', '');
             },
+            /**
+             * 初始化数据可视化组件
+             * */
             initDataVComponent(event) {
                 let dragItem = JSON.parse(event.dataTransfer.getData('dragItem'));
                 let domId = dragItem.type + '_' + new Date().getTime();
                 let dataVComponent = {
                     domId: domId,
-                    componentName: 've-line',
+                    componentName: dragItem.componentName,
                     style: {},
-                    chartData: DEFAULT_DATA[dragItem.type]
+                    data: DEFAULT_DATA[dragItem.type]
                 };
 
                 let zoneWidth = this.dropZoneStyle.width;
@@ -140,10 +149,10 @@
                 let yprop = getProportion(Number(zoneHeight.substr(0, zoneHeight.length - 2)), screen.height);
                 let positionX = (event.offsetX * xprop).toFixed(4);
                 let positionY = (event.offsetY * yprop).toFixed(4);
-                dataVComponent.style.width = `${((225 / xprop).toFixed() * xprop).toFixed(4)}px`;
-                dataVComponent.style.height = `${((105 / yprop).toFixed() * yprop).toFixed(4)}px`;
+                dataVComponent.style.width = `${((400 / xprop).toFixed() * xprop).toFixed(4)}px`;
+                dataVComponent.style.height = `${((400 / yprop).toFixed() * yprop).toFixed(4)}px`;
                 dataVComponent.style.transform = `translate(${positionX}px,${positionY}px)`;
-                dataVComponent.style['-webkit-transform'] = dataVComponent.style.transform;
+                // dataVComponent.style['-webkit-transform'] = dataVComponent.style.transform;
                 dataVComponent.positionX = positionX;
                 dataVComponent.positionY = positionY;
                 dataVComponent.style.color = '#FFFFFF';
@@ -183,6 +192,8 @@
                     .on('resizemove', (event) => {
                         let dataVComponents = vm.dataVComponents;
                         const target = event.target,
+                            // xProportion = getProportion(screen.width, this.dropZoneStyle.width.substring(0, this.dropZoneStyle.width.length - 2)),
+                            // yProportion = getProportion(screen.height, this.dropZoneStyle.height.substring(0, this.dropZoneStyle.height.length - 2)),
                             index = Number(target.getAttribute('index')),
                             isChartType = Boolean(target.getAttribute('isChartType')),
                             dataVComponent = dataVComponents[index],
@@ -235,50 +246,98 @@
                 const dataVComponents = this.dataVComponents;
                 dataVComponents.splice(index, 1);
             },
+            /**
+             * 预览
+             * */
             preview() {
-
+                const vm = this;
+                //主屏幕是否已经全屏模式
+                const isRootFullScreen = isFullScreen();
                 let style = {};
                 Object.assign(style, this.dropZoneStyle);
                 style.width = '100%';
                 style.height = '100%';
                 style.border = 'none';
-                this.previewStyle = style;
-                this.isPreview = true;
-                this.fullWindow();
-                let vm = this;
-                document.onfullscreenchange = () => {
+                vm.previewStyle = style;
+                vm.isPreview = true;
+
+                //视图全屏
+                const dataVRoot = document.getElementById('data-view-root');
+                fullScreen(dataVRoot);
+                //按屏幕比例改变组件样式
+                vm.transDataVComponentsStyle(this.isPreview);
+
+                //监听全屏变化
+                const dataFullChangeListener = (isRootFullScreen) => {
                     if (!isFullScreen()) {
                         //要执行的动作
-                        vm.isPreview = false
-                    }
-                }
+                        vm.isPreview = false;
+                        vm.transDataVComponentsStyle(vm.isPreview);
+                        if (isRootFullScreen) {
+                            fullScreen();
+                        }
+                    } else {
+                        //若一早就是全屏状态了，重新绘制ECHARTS视图
+                        vm.$refs['data-view-component'].$children.forEach(child => {
+                            if (child.echarts) {
+                                child.echarts.resize();
+                            }
 
-            },
-            /**
-             * 全屏
-             */
-            fullWindow() {
-                let ele = document.documentElement;
-                if (ele.requestFullscreen) {
-                    ele.requestFullscreen();
-                } else if (ele.mozRequestFullScreen) {
-                    ele.mozRequestFullScreen();
-                } else if (ele.webkitRequestFullscreen) {
-                    ele.webkitRequestFullscreen();
-                } else if (ele.msRequestFullscreen) {
-                    ele.msRequestFullscreen();
+                        });
+                    }
+                };
+                dataVRoot.onfullscreenchange = () => {
+                    dataFullChangeListener(isRootFullScreen)
                 }
+            },
+            fullWindow() {
+                fullScreen();
             },
             saveView() {
 
+            },
+            transDataVComponentsStyle(isPreview) {
+                let xProportion = getProportion(screen.width, this.dropZoneStyle.width.substring(0, this.dropZoneStyle.width.length - 2)),
+                    yProportion = getProportion(screen.height, this.dropZoneStyle.height.substring(0, this.dropZoneStyle.height.length - 2));
+                this.dataVComponents.forEach(item => {
+                    let style = item.style;
+                    let realWidth = style.width.substring(0, style.width.length - 2);
+                    let realHeight = style.height.substring(0, style.height.length - 2);
+                    if (isPreview) {
+                        style.width = `${xProportion * realWidth}px`;
+                        style.height = `${yProportion * realHeight}px`;
+                        style.transform = `translate(${item.positionX * xProportion}px,${item.positionY * yProportion}px)`
+                    } else {
+                        style.width = `${realWidth / xProportion}px`;
+                        style.height = `${realHeight / yProportion}px`;
+                        style.transform = `translate(${item.positionX}px,${item.positionY}px)`
+                    }
+
+                    item.style = style;
+                });
             }
         },
 
     }
 
+    /**
+     * 全屏
+     */
+    function fullScreen(ele = document.documentElement) {
+        if (ele.requestFullscreen) {
+            ele.requestFullscreen();
+        } else if (ele.mozRequestFullScreen) {
+            ele.mozRequestFullScreen();
+        } else if (ele.webkitRequestFullscreen) {
+            ele.webkitRequestFullscreen();
+        } else if (ele.msRequestFullscreen) {
+            ele.msRequestFullscreen();
+        }
+    }
+
     //获取两个值的比例
     function getProportion(divisor, dividend) {
-        return (Number(divisor) / dividend).toFixed(4);
+        return (Number(divisor) / Number(dividend)).toFixed(4);
     }
 
     function isFullScreen() {
@@ -294,21 +353,43 @@
 </script>
 
 <style scoped>
-
+    /deep/ .echarts {
+        width: 100% !important;
+        height: 100% !important;
+    }
 
     .el-container {
         height: 100%;
     }
 
+    .el-button--info {
+        border: none;
+        font-size: 24px;
+        color: #fff;
+        background-color: rgba(225, 225, 225, 0.0);
+        /*border-color: #ffffff;*/
+    }
+
+    .el-button:hover {
+        background-color: rgba(225, 225, 225, 0.3);
+    }
+
+    .el-button.is-circle {
+        padding: 10px;
+    }
+
     .el-header {
-        background: linear-gradient(to right, rgb(40, 48, 72), rgb(133, 147, 152));
+        height: 70px !important;
+        background: -moz-linear-gradient(right, #26d9b3 0%, #5a84fd 100%);
+        background: linear-gradient(to right, #26d9b3 0%, #5a84fd 100%);
+        background: -webkit-linear-gradient(right, #26d9b3 0%, #5a84fd 100%);
         color: #333;
         text-align: center;
-        line-height: 60px;
+        line-height: 70px;
     }
 
     .el-main {
-        background-color: #E9EEF3;
+        background-color: #fff;
         color: #333;
         text-align: center;
         line-height: 160px;
@@ -316,15 +397,15 @@
     }
 
     .sys-title {
-        font-size: 20px;
+        font-size: 30px;
         font-weight: bold;
         float: left;
-        height: 60px;
+        height: 70px;
         margin: auto;
         background-size: contain;
-        background: linear-gradient(to right, white, blue);
+        background: #fff;
         text-align: center;
-        line-height: 60px;
+        line-height: 70px;
         -webkit-text-fill-color: transparent;
         -webkit-background-clip: text;
     }
@@ -334,6 +415,7 @@
     }
 
     body > .el-container {
+        background-color: #fff;
         margin-bottom: 40px;
     }
 
@@ -354,6 +436,8 @@
     }
 
     .draggable-list {
+        overflow-y: auto;
+        height: 100%;
         width: 12%;
     }
 
@@ -364,10 +448,11 @@
     }
 
     .drag-container {
+        overflow-y: auto;
         display: flex;
         flex-direction: column;
         flex-grow: 100;
-        background-color: gainsboro;
+        background-color: #f8f9fe;
     }
 
     .datav-item-block {
@@ -377,9 +462,10 @@
     }
 
     .datav-item-block:hover, .datav-item-selected {
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
         border-radius: 5px;
-        border: 1px solid #2185d0;
-        background-color: gainsboro;
+        border: 1px solid #eee;
+        background-color: #fff;
     }
 
     .datav-item-close {
@@ -397,18 +483,24 @@
         right: 2px;
     }
 
-    .datav-item-close:hover{
+    .datav-item-close:hover {
         color: indianred;
     }
 
     #drop-zone {
-        background-color: #ccc;
-        border: dashed 4px transparent;
-        border-radius: 4px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+        border: dashed 2px transparent;
+        border-radius: 5px;
         padding: 10px;
         width: 80%;
         margin: auto;
         transition: background-color 0.3s;
+    }
+
+    .data-view-root {
+        width: 100%;
+        height: 100%;
     }
 
 

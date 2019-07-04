@@ -10,8 +10,8 @@
                  :index="index"
                  :isChartType="dataVComponent.componentName.startsWith('ve')">
                 <component :is="dataVComponent.componentName"
-                           :ref="'chart_'+index"
-                           :data="dataVComponent.chartData"
+                           :ref="'dataV_'+index+''"
+                           v-bind="dataVComponent.data"
                            width="100%"
                            height="100%">
                 </component>
@@ -44,6 +44,11 @@
 </script>
 
 <style scoped>
+    /deep/ .echarts {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
     .datav-view-block {
         box-sizing: border-box;
         touch-action: none;

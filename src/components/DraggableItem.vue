@@ -1,7 +1,7 @@
 <template>
     <div class="draggable-component">
         <el-collapse v-model="activeNames">
-            <el-collapse-item v-for=" (draggableItem , index) in draggableItems" :key="draggableItem.id"
+            <el-collapse-item  v-for=" (draggableItem , index) in draggableItems" :key="draggableItem.id"
                               :index="String(index+1)" :name="String(index)">
                 <template slot="title">
                     <div class="type-title" >
@@ -9,17 +9,20 @@
                         {{draggableItem.title}}
                     </div>
                 </template>
-                <div v-for="dragItem in draggableItem.dragItems" :title="dragItem.name"
-                     v-bind:key="dragItem.id">
-                    <div class="draggable" draggable="true" @dragstart="dragstart($event,dragItem)" @dragend="dragend">
-                        <el-card :body-style="{ padding: '0px' }" shadow="hover">
-                            <img :src="dragItem.img" class="image">
-                            <div class="item-title">
-                                <span>{{dragItem.name}}</span>
-                            </div>
-                        </el-card>
+                <div class="drag-item-container">
+                    <div v-for="dragItem in draggableItem.dragItems" :title="dragItem.name"
+                         v-bind:key="dragItem.id">
+                        <div class="draggable" draggable="true" @dragstart="dragstart($event,dragItem)" @dragend="dragend">
+                            <el-card :body-style="{ padding: '0px' }" shadow="hover">
+                                <img :src="dragItem.img?dragItem.img:require(`../assets/chart-type/${dragItem.type}.jpg`)" class="image">
+                                <div class="item-title">
+                                    <span>{{dragItem.name}}</span>
+                                </div>
+                            </el-card>
+                        </div>
                     </div>
                 </div>
+
             </el-collapse-item>
         </el-collapse>
     </div>
@@ -52,10 +55,15 @@
 <style scoped>
     /deep/ .el-collapse-item__header {
         background-color: aliceblue;
+    }
 
+    .drag-item-container{
+        height: 100%;
+        overflow-y: auto;
     }
 
     .type-title{
+        font-size: 16px;
         width: 100%;
         margin: auto;
     }
@@ -73,6 +81,5 @@
         width: 100%;
         display: block;
     }
-
 
 </style>
