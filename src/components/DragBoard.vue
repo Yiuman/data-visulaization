@@ -42,7 +42,8 @@
                                     </div>
                                     <component :is="dataVComponent.componentName"
                                                :ref="'chart_'+index"
-                                               v-bind="dataVComponent.data">
+                                               v-bind="dataVComponent.data"
+                                               :dataVComponent="dataVComponent">
                                     </component>
                                 </div>
                             </div>
@@ -135,6 +136,8 @@
              * */
             initDataVComponent(event) {
                 let dragItem = JSON.parse(event.dataTransfer.getData('dragItem'));
+                let itemWidth = dragItem.width || 400;
+                let itemHeight = dragItem.height || 400;
                 let domId = dragItem.type + '_' + new Date().getTime();
                 let dataVComponent = {
                     domId: domId,
@@ -143,14 +146,19 @@
                     data: DEFAULT_DATA[dragItem.type]
                 };
 
-                let zoneWidth = this.dropZoneStyle.width;
-                let zoneHeight = this.dropZoneStyle.height;
-                let xprop = getProportion(Number(zoneWidth.substr(0, zoneWidth.length - 2)), screen.width);
-                let yprop = getProportion(Number(zoneHeight.substr(0, zoneHeight.length - 2)), screen.height);
-                let positionX = (event.offsetX * xprop).toFixed(4);
-                let positionY = (event.offsetY * yprop).toFixed(4);
-                dataVComponent.style.width = `${((400 / xprop).toFixed() * xprop).toFixed(4)}px`;
-                dataVComponent.style.height = `${((400 / yprop).toFixed() * yprop).toFixed(4)}px`;
+                //取得拖拽中心长宽，与分辨率作比例，拿到比例值处理拖拽长宽
+                let zoneWidth = Number(this.dropZoneStyle.width.substr(0, this.dropZoneStyle.width.length - 2));
+                let zoneHeight = Number(this.dropZoneStyle.height.substr(0, this.dropZoneStyle.height.length - 2));
+                let xprop = getProportion(zoneWidth, screen.width);
+                let yprop = getProportion(zoneHeight, screen.height);
+
+                let offsetX = (zoneWidth - event.offsetX < itemWidth) ? (zoneWidth - itemWidth) : event.offsetX;
+                let offsetY = (zoneHeight - event.offsetY < itemHeight) ? (zoneHeight - itemHeight) : event.offsetY;
+
+                let positionX = (offsetX).toFixed(4);
+                let positionY = (offsetY).toFixed(4);
+                dataVComponent.style.width = `${((itemWidth / xprop).toFixed() * xprop).toFixed(4)}px`;
+                dataVComponent.style.height = `${((itemHeight / yprop).toFixed() * yprop).toFixed(4)}px`;
                 dataVComponent.style.transform = `translate(${positionX}px,${positionY}px)`;
                 // dataVComponent.style['-webkit-transform'] = dataVComponent.style.transform;
                 dataVComponent.positionX = positionX;
@@ -392,7 +400,7 @@
         background-color: #fff;
         color: #333;
         text-align: center;
-        line-height: 160px;
+        /*line-height: 160px;*/
         padding: 0;
     }
 
@@ -501,6 +509,22 @@
     .data-view-root {
         width: 100%;
         height: 100%;
+    }
+
+    ::-webkit-scrollbar {
+        width: 3px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        border-radius: 3px;
+        background: rgba(0, 0, 0, 0.06);
+    }
+
+    /* 滚动条滑块 */
+    ::-webkit-scrollbar-thumb {
+        border-radius: 3px;
+        background: rgba(0, 0, 0, 0.12);
     }
 
 

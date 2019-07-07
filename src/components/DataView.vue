@@ -12,6 +12,7 @@
                 <component :is="dataVComponent.componentName"
                            :ref="'dataV_'+index+''"
                            v-bind="dataVComponent.data"
+                           :dataVComponent="dataVComponent"
                            width="100%"
                            height="100%">
                 </component>

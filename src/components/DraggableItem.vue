@@ -1,10 +1,10 @@
 <template>
     <div class="draggable-component">
         <el-collapse v-model="activeNames">
-            <el-collapse-item  v-for=" (draggableItem , index) in draggableItems" :key="draggableItem.id"
-                              :index="String(index+1)" :name="String(index)">
+            <el-collapse-item v-for=" (draggableItem , index) in draggableItems" :key="draggableItem.id"
+                              :index="String(index+1)" :name="draggableItem.title">
                 <template slot="title">
-                    <div class="type-title" >
+                    <div class="type-title">
                         <i class="header-icon" :class="draggableItem.icon"></i>
                         {{draggableItem.title}}
                     </div>
@@ -12,9 +12,11 @@
                 <div class="drag-item-container">
                     <div v-for="dragItem in draggableItem.dragItems" :title="dragItem.name"
                          v-bind:key="dragItem.id">
-                        <div class="draggable" draggable="true" @dragstart="dragstart($event,dragItem)" @dragend="dragend">
+                        <div class="draggable" draggable="true" @dragstart="dragstart($event,dragItem)"
+                             @dragend="dragend">
                             <el-card :body-style="{ padding: '0px' }" shadow="hover">
-                                <img :src="dragItem.img?dragItem.img:require(`../assets/chart-type/${dragItem.type}.jpg`)" class="image">
+                                <img :src="dragItem.img?dragItem.img:require('../assets/images/'+dragItem.type+'.jpg')"
+                                     class="image">
                                 <div class="item-title">
                                     <span>{{dragItem.name}}</span>
                                 </div>
@@ -30,12 +32,14 @@
 
 <script>
     import {DRAGGABLE_ITEMS} from '../constant'
+
     export default {
         name: "DraggableItem",
         data() {
             return {
-                activeNames: '0',
-                draggableItems: DRAGGABLE_ITEMS
+                draggableItems: DRAGGABLE_ITEMS,
+                activeNames: DRAGGABLE_ITEMS[0].title,
+
             }
         },
         methods: {
@@ -57,22 +61,22 @@
         background-color: aliceblue;
     }
 
-    .drag-item-container{
+    .drag-item-container {
         height: 100%;
         overflow-y: auto;
     }
 
-    .type-title{
+    .type-title {
         font-size: 16px;
         width: 100%;
         margin: auto;
     }
 
-    .draggable{
+    .draggable {
         padding: 10px;
     }
 
-    .item-title{
+    .item-title {
         width: 100%;
         text-align: center;
     }
