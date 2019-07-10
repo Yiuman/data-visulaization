@@ -7,7 +7,7 @@ Vue.use(Router);
 import Home from "../pages/Home";
 
 export default new Router({
-    mode: "history",//去掉路径中的#
+    mode: "hash",//去掉路径中的#
     routes: [
         {
             path: "/",

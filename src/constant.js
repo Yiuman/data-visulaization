@@ -180,7 +180,7 @@ export const DRAGGABLE_ITEMS = [
                 name: '文本框',
                 height: 60,
                 type: 'dataText',
-                img:require('./assets/images/dataText.png'),
+                img: require('./assets/images/dataText.png'),
                 componentName: 'data-text'
             }
         ]
@@ -192,10 +192,10 @@ export const DRAGGABLE_ITEMS = [
         title: '装饰',
         dragItems: [
             {
-                id:'1',
-                name:'图片',
-                type:'picture',
-                componentName:'data-custom'
+                id: '1',
+                name: '图片',
+                type: 'picture',
+                componentName: 'data-custom'
             }
         ]
 
@@ -204,6 +204,7 @@ export const DRAGGABLE_ITEMS = [
 
 // 默认数据配置，对应上面的可拖拽模块的type
 export const DEFAULT_DATA = {
+    //折线图
     line: {
         data: {
             columns: ['日期', '访问用户', '下单用户', '下单率'],
@@ -218,8 +219,14 @@ export const DEFAULT_DATA = {
         },
         width: '100%',
         height: '100%',
+        settings: {
+            dimension: ['日期'],
+            metrics: ['访问用户', '下单用户', '下单率'],
+            area: false
+        }
 
     },
+    //饼图
     pie: {
         data: {
             columns: ['日期', '访问用户'],
@@ -235,6 +242,7 @@ export const DEFAULT_DATA = {
         width: '100%',
         height: '100%',
     },
+    //柱状图
     bar: {
         options: {
             legend: {},
@@ -766,6 +774,7 @@ export const DEFAULT_DATA = {
         },
         autoresize: true,
     },
+    //数据表格
     dataTable: {
         tableData: [{
             date: '2016-05-02',
@@ -848,14 +857,14 @@ export const DEFAULT_DATA = {
         }
     },
     //图片
-    picture:{
+    picture: {
         title: {
             label: '图标标题',
             style: {
                 color: '#111'
             }
         },
-        customMix:[
+        customMix: [
             {
                 componentName: 'el-image',
                 data: {

@@ -48,11 +48,20 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!--组件属性配置区划-->
+                        <div class="data-view-config">
+                            <ConfigSetting :dataVComponent="dataVComponents[selectedIndex]"
+                                           :dropZoneStyle="dropZoneStyle"></ConfigSetting>
+                        </div>
                     </div>
                 </div>
             </el-main>
+
+
         </el-container>
 
+        <!--视图区划，用于预览-->
         <div class="data-view-root" ref="data-view-root" id="data-view-root" v-show="isPreview">
             <DataView ref="data-view-component" :dataVStyle="previewStyle"
                       :dataVComponents="dataVComponents"></DataView>
@@ -66,6 +75,7 @@
 <script>
     import interact from 'interactjs'
     import DraggableItem from './DraggableItem'
+    import ConfigSetting from './ConfigSetting'
     import DataView from "./DataView";
     import {DEFAULT_DATA} from "../constant";
 
@@ -74,6 +84,7 @@
         components: {
             DataView,
             DraggableItem,
+            ConfigSetting
         },
         data() {
             return {
@@ -99,6 +110,9 @@
 
         },
         methods: {
+            /**
+             * 初始化拖拽中心
+             */
             initDropZone() {
                 let dragContainer = this.$refs['drag-container'];
                 let zoneWith = (dragContainer.offsetWidth * 0.9).toFixed();
@@ -142,8 +156,12 @@
                 let dataVComponent = {
                     domId: domId,
                     componentName: dragItem.componentName,
+                    type: dragItem.type,
                     style: {},
-                    data: DEFAULT_DATA[dragItem.type]
+                    data: JSON.parse(JSON.stringify(DEFAULT_DATA[dragItem.type])),
+                    dataSource: {
+                        type: '',
+                    }
                 };
 
                 //取得拖拽中心长宽，与分辨率作比例，拿到比例值处理拖拽长宽
@@ -304,6 +322,7 @@
             saveView() {
 
             },
+            //全屏与退出全屏食，改变组件的比例大小缩放
             transDataVComponentsStyle(isPreview) {
                 let xProportion = getProportion(screen.width, this.dropZoneStyle.width.substring(0, this.dropZoneStyle.width.length - 2)),
                     yProportion = getProportion(screen.height, this.dropZoneStyle.height.substring(0, this.dropZoneStyle.height.length - 2));
@@ -525,6 +544,19 @@
     ::-webkit-scrollbar-thumb {
         border-radius: 3px;
         background: rgba(0, 0, 0, 0.12);
+    }
+
+    .data-view-config {
+        overflow-y: auto;
+        padding: 10px;
+        /*position: absolute;*/
+        /*top: 70px;*/
+        /*right: 0;*/
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0);
+        border-radius: 5px;
+        border: 1px solid #eee;
+        width: 200px;
+        background-color: #fff;
     }
 
 
