@@ -76,7 +76,7 @@ const treeData = {
     ]
 };
 
-// 可拖拽模块配置
+// 可拖拽模块配置,可拖拽组件默认是都带有数据源配置的，若不需要数据源的组件，可以增加字段useDataSource=false
 export const DRAGGABLE_ITEMS = [
     {
         id: '1',
@@ -86,7 +86,9 @@ export const DRAGGABLE_ITEMS = [
             id: '1',
             name: '折线图',
             type: 'line',
-            componentName: 've-line'
+            componentName: 've-line',
+            hasDataSource: true,
+            dataField: 'data'
         }, {
             id: '2',
             name: '饼图',
@@ -202,7 +204,7 @@ export const DRAGGABLE_ITEMS = [
     }
 ];
 
-// 默认数据配置，对应上面的可拖拽模块的type
+// 默认数据配置，对应上面的可拖拽模块的type,每个type的数据配置对应的是组件的所有props,根据组件的props不同而配置不同的属性
 export const DEFAULT_DATA = {
     //折线图
     line: {
@@ -224,7 +226,6 @@ export const DEFAULT_DATA = {
             metrics: ['访问用户', '下单用户', '下单率'],
             area: false
         }
-
     },
     //饼图
     pie: {

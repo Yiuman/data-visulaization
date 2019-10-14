@@ -8,7 +8,7 @@
                 <el-row class="top-button-row">
                     <el-button @click="preview" type="info" icon="el-icon-view" circle></el-button>
                     <el-button @click="fullWindow" type="info" icon="el-icon-full-screen" circle></el-button>
-                    <el-button @click="saveView" type="info" icon="el-icon-finished" circle></el-button>
+                    <el-button @click="saveDataVisualiew" type="info" icon="el-icon-finished" circle></el-button>
                 </el-row>
 
             </el-header>
@@ -21,12 +21,13 @@
                         </div>
                         <!--拖拽中心,非预览状态-->
                         <div class="drag-container" ref="drag-container">
-                            <div id="drop-zone" ref="drop-zone" :style="dropZoneStyle" @drop="drop"
+                            <div id="drop-zone" ref="drop-zone"
+                                 :style="dropZoneStyle" @drop="drop"
                                  @dragenter="dragenter"
-                                 @dragleave="dragleave" @dragover.prevent>
+                                 @dragleave="dragleave"
+                                 @dragover.prevent>
                                 <div class="datav-item-block"
                                      v-for="(dataVComponent,index) in dataVComponents"
-                                     :class="index===selectedIndex?'datav-item-selected':''"
                                      :key="index"
                                      :id="dataVComponent.domId"
                                      :style="dataVComponent.style"
@@ -38,7 +39,7 @@
                                     <div class="datav-item-close"
                                          :ref="dataVComponent.domId+'close'"
                                          :style="index===selectedIndex?'':'display: none;'">
-                                        <i class="el-icon-close" aria-hidden="true" @click="closeDataVItem(index)"></i>
+                                        <i class="el-icon-close" aria-hidden="true" @click="deleteDataVItem(index)"></i>
                                     </div>
                                     <component :is="dataVComponent.componentName"
                                                :ref="'chart_'+index"
@@ -51,14 +52,54 @@
 
                         <!--组件属性配置区划-->
                         <div class="data-view-config">
-                            <ConfigSetting :dataVComponent="dataVComponents[selectedIndex]"
-                                           :dropZoneStyle="dropZoneStyle"></ConfigSetting>
+                            <div class="data-view-setting">
+                                <el-collapse v-model="configActiveName" accordion>
+                                    <el-collapse-item title="全局样式" name="global">
+                                        <FieldRender :field-define="configSettings.globalStyle"
+                                                     :bind-key="viewId"
+                                                     :bind-data="dropZoneStyle"
+                                                     @beforeUpload="beforeUpload"></FieldRender>
+                                    </el-collapse-item>
+                                    <div v-if="dataVComponents[selectedIndex]">
+                                        <el-collapse-item title="组件样式" name="style">
+                                            <FieldRender :field-define="configSettings.componentStyle"
+                                                         :bind-data="dataVComponents[selectedIndex].style"
+                                                         :bind-key="dataVComponents[selectedIndex].componentId"
+                                                         @beforeUpload="beforeUpload"></FieldRender>
+                                        </el-collapse-item>
+
+                                        <el-collapse-item title="组件配置项" name="config"
+                                                          v-if="configSettings.componentSettings[dataVComponents[selectedIndex].type]">
+                                            <FieldRender
+                                                    :field-define="configSettings.componentSettings[dataVComponents[selectedIndex].type] || {}"
+                                                    :bind-data="dataVComponents[selectedIndex].data"
+                                                    :bind-key="dataVComponents[selectedIndex].componentId"
+                                                    @beforeUpload="beforeUpload"></FieldRender>
+                                        </el-collapse-item>
+
+                                        <el-collapse-item title="组件数据源"
+                                                          name="dataSource"
+                                                          v-if="dataVComponents[selectedIndex].useDataSource
+                                                          &&dataVComponents[selectedIndex].dataField">
+
+                                            <FieldRender :field-define="configSettings.dataSource"
+                                                         :bind-data="dataVComponents[selectedIndex].dataSource">
+                                            </FieldRender>
+                                            <!--静态数据-->
+                                            <FieldRender v-if="dataVComponents[selectedIndex].dataField
+                                            && dataVComponents[selectedIndex].dataSource.type==='STATIC'"
+                                                         :field-define="selectedComponentStaticFieldDefine"
+                                                         :bind-data="dataVComponents[selectedIndex].data">
+                                            </FieldRender>
+                                        </el-collapse-item>
+                                    </div>
+                                </el-collapse>
+                            </div>
                         </div>
+
                     </div>
                 </div>
             </el-main>
-
-
         </el-container>
 
         <!--视图区划，用于预览-->
@@ -66,25 +107,26 @@
             <DataView ref="data-view-component" :dataVStyle="previewStyle"
                       :dataVComponents="dataVComponents"></DataView>
         </div>
-
     </div>
-
-
 </template>
 
 <script>
     import interact from 'interactjs'
-    import DraggableItem from './DraggableItem'
-    import ConfigSetting from './ConfigSetting'
-    import DataView from "./DataView";
+    import DraggableItem from '../components/DraggableItem'
+    import DataView from "../components/DataView";
+    import FieldRender from '../components/FieldRender'
     import {DEFAULT_DATA} from "../constant";
+    import {getDataView, saveView, deleteComponent, request} from '../request'
+    import {fullScreen, getProportion, isFullScreen, getSizeNumberWithUnit, transDataVComponentsStyle} from '../visual'
+    import {COMPONENT_SETTINGS, DATA_SOURCE, GLOBAL_STYLE, COMPONENT_STYLE} from '../component_config_settings.js';
+
 
     export default {
         name: "DrawBoard",
         components: {
             DataView,
             DraggableItem,
-            ConfigSetting
+            FieldRender
         },
         data() {
             return {
@@ -100,12 +142,47 @@
                 selectedIndex: 0,
                 isPreview: false,
                 previewStyle: {},
+                viewId: null,
+                configActiveName: '',
+                configSettings: {
+                    componentSettings: COMPONENT_SETTINGS,
+                    globalStyle: GLOBAL_STYLE,
+                    dataSource: DATA_SOURCE,
+                    componentStyle: COMPONENT_STYLE
+                }
             }
         },
         mounted() {
             //初始化拖拽中心
             if (!this.isPreview) {
                 this.initDropZone();
+            }
+
+            //若传入视图ID，则获取视图数据进行渲染及初始化操作
+            const viewId = this.$route.query.viewId;
+            if (viewId) {
+                this.viewId = viewId;
+                getDataView(viewId).then(result => {
+                    this.dropZoneStyle = result.style;
+                    this.dataVComponents = result.components;
+                    this.dataVComponents.forEach(component => {
+                        this.initDraggable(component.domId);
+                        if (component.dataSource.type === 'API') {
+                            //获取组件数据
+                            request(component.dataSource.api).then(result => {
+                                if (result) {
+                                    component.data[component.dataField] = JSON.parse(result);
+                                } else {
+                                    component.data.dataEmpty = true
+                                }
+                            }).catch(error => {
+                                window.console.warn("组件数据获取异常", error);
+                            })
+                        }
+                    })
+                }).catch(error => {
+                    this.$notify({message: error, type: "warning"})
+                })
             }
 
         },
@@ -120,32 +197,6 @@
                 this.dropZoneStyle.height = `${(zoneWith * ((screen.height / screen.width).toFixed(4))).toFixed()}px`;
             },
             /**
-             * 拖拽落下
-             */
-            drop(event) {
-                event.preventDefault();
-                this.initDataVComponent(event);
-            },
-            dragenter(event) {
-                event.preventDefault();
-                this.$set(this.dropZoneStyle, 'border-style', 'solid');
-                this.$set(this.dropZoneStyle, 'border-image', 'linear-gradient(#26d9b3,#5a84fd) 30 30 ');
-            },
-            dragleave(event) {
-                event.preventDefault();
-                this.$set(this.dropZoneStyle, 'border-style', '');
-                this.$set(this.dropZoneStyle, 'border-color', '#aaa');
-                this.$set(this.dropZoneStyle, 'border-image', '');
-            },
-            dragstart() {
-                this.$set(this.dropZoneStyle, 'border-color', '#aaa');
-            },
-            dragend() {
-                this.$set(this.dropZoneStyle, 'border-color', '');
-                this.$set(this.dropZoneStyle, 'border-style', 'dashed');
-                this.$set(this.dropZoneStyle, 'border-image', '');
-            },
-            /**
              * 初始化数据可视化组件
              * */
             initDataVComponent(event) {
@@ -158,15 +209,20 @@
                     componentName: dragItem.componentName,
                     type: dragItem.type,
                     style: {},
+                    dataField: dragItem.dataField,
+                    useDataSource: dragItem.useDataSource || true,
                     data: JSON.parse(JSON.stringify(DEFAULT_DATA[dragItem.type])),
-                    dataSource: {
-                        type: '',
-                    }
                 };
 
+                if (dataVComponent.useDataSource) {
+                    dataVComponent.dataSource = {
+                        type: 'STATIC'
+                    }
+                }
+
                 //取得拖拽中心长宽，与分辨率作比例，拿到比例值处理拖拽长宽
-                let zoneWidth = Number(this.dropZoneStyle.width.substr(0, this.dropZoneStyle.width.length - 2));
-                let zoneHeight = Number(this.dropZoneStyle.height.substr(0, this.dropZoneStyle.height.length - 2));
+                let zoneWidth = Number(getSizeNumberWithUnit(this.dropZoneStyle.width));
+                let zoneHeight = Number(getSizeNumberWithUnit(this.dropZoneStyle.height));
                 let xprop = getProportion(zoneWidth, screen.width);
                 let yprop = getProportion(zoneHeight, screen.height);
 
@@ -178,7 +234,6 @@
                 dataVComponent.style.width = `${((itemWidth / xprop).toFixed() * xprop).toFixed(4)}px`;
                 dataVComponent.style.height = `${((itemHeight / yprop).toFixed() * yprop).toFixed(4)}px`;
                 dataVComponent.style.transform = `translate(${positionX}px,${positionY}px)`;
-                // dataVComponent.style['-webkit-transform'] = dataVComponent.style.transform;
                 dataVComponent.positionX = positionX;
                 dataVComponent.positionY = positionY;
                 dataVComponent.style.color = '#FFFFFF';
@@ -268,13 +323,50 @@
              * 删除拖拽组件
              * @param index 组件下标
              */
-            closeDataVItem(index) {
+            deleteDataVItem(index) {
                 const dataVComponents = this.dataVComponents;
-                dataVComponents.splice(index, 1);
+                const indexComponent = dataVComponents[index];
+                if (indexComponent.componentId) {
+                    this.$confirm('此操作将永久删除此该组件，是否继续？', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        deleteComponent(indexComponent.componentId).then(() => {
+                            this.$message({
+                                type: 'success',
+                                message: '删除成功!'
+                            });
+                            dataVComponents.splice(index, 1);
+                        }).catch(error => {
+                            this.$message({type: 'warning', message: error})
+                        });
+                    }).catch(() => {
+
+                    })
+                } else {
+                    dataVComponents.splice(index, 1);
+                }
+            },
+            //配置组件上传附件前触发,上传文件前应先保存视图，确保附件对象有关联对象ID
+            beforeUpload(file, extend, callback) {
+                if (!extend.bindKey) {
+                    saveView({
+                        viewId: this.viewId,
+                        style: {...this.dropZoneStyle, 'border-style': ''},
+                        components: this.dataVComponents
+                    }).then(result => {
+                        this.viewId = result;
+                        callback(result)
+                    })
+                } else {
+                    callback(true);
+                }
+
             },
             /**
              * 预览
-             * */
+             */
             preview() {
                 const vm = this;
                 //主屏幕是否已经全屏模式
@@ -283,7 +375,6 @@
                 Object.assign(style, this.dropZoneStyle);
                 style.width = '100%';
                 style.height = '100%';
-                style.border = 'none';
                 vm.previewStyle = style;
                 vm.isPreview = true;
 
@@ -291,14 +382,14 @@
                 const dataVRoot = document.getElementById('data-view-root');
                 fullScreen(dataVRoot);
                 //按屏幕比例改变组件样式
-                vm.transDataVComponentsStyle(this.isPreview);
+                transDataVComponentsStyle(vm.isPreview, vm.dropZoneStyle, vm.dataVComponents);
 
                 //监听全屏变化
                 const dataFullChangeListener = (isRootFullScreen) => {
                     if (!isFullScreen()) {
                         //要执行的动作
                         vm.isPreview = false;
-                        vm.transDataVComponentsStyle(vm.isPreview);
+                        transDataVComponentsStyle(vm.isPreview, vm.dropZoneStyle, vm.dataVComponents);
                         if (isRootFullScreen) {
                             fullScreen();
                         }
@@ -319,63 +410,78 @@
             fullWindow() {
                 fullScreen();
             },
-            saveView() {
+            /**
+             * 保存视图
+             */
+            saveDataVisualiew() {
+                if (this.dataVComponents.length === 0) {
+                    this.$notify.info({title: '请添加组件编辑视图'});
+                    return;
+                }
+                saveView({
+                    viewId: this.viewId,
+                    style: {...this.dropZoneStyle, 'border-style': ''},
+                    components: this.dataVComponents
+                }).then(result => {
+                    this.viewId = result;
+                    this.$message({message: '保存成功', type: "success"})
+                }).catch(error => {
+                    this.$message({message: error, type: 'warning'})
+                })
+            },
+            /**
+             * 拖拽落下
+             */
+            drop(event) {
+                event.preventDefault();
+                this.initDataVComponent(event);
+            },
+            dragenter(event) {
+                event.preventDefault();
+                this.$refs['drop-zone'].style['border-style'] = 'solid';
+                this.$refs['drop-zone'].style['border-image'] = 'linear-gradient(#26d9b3,#5a84fd) 30 30';
 
             },
-            //全屏与退出全屏食，改变组件的比例大小缩放
-            transDataVComponentsStyle(isPreview) {
-                let xProportion = getProportion(screen.width, this.dropZoneStyle.width.substring(0, this.dropZoneStyle.width.length - 2)),
-                    yProportion = getProportion(screen.height, this.dropZoneStyle.height.substring(0, this.dropZoneStyle.height.length - 2));
-                this.dataVComponents.forEach(item => {
-                    let style = item.style;
-                    let realWidth = style.width.substring(0, style.width.length - 2);
-                    let realHeight = style.height.substring(0, style.height.length - 2);
-                    if (isPreview) {
-                        style.width = `${xProportion * realWidth}px`;
-                        style.height = `${yProportion * realHeight}px`;
-                        style.transform = `translate(${item.positionX * xProportion}px,${item.positionY * yProportion}px)`
-                    } else {
-                        style.width = `${realWidth / xProportion}px`;
-                        style.height = `${realHeight / yProportion}px`;
-                        style.transform = `translate(${item.positionX}px,${item.positionY}px)`
-                    }
-
-                    item.style = style;
-                });
+            dragleave(event) {
+                event.preventDefault();
+                this.$refs['drop-zone'].style['border-style'] = '';
+                this.$refs['drop-zone'].style['border-color'] = '#aaa';
+                this.$refs['drop-zone'].style['border-image'] = '';
+            },
+            dragstart() {
+                this.$refs['drop-zone'].style['border-color'] = '#aaa';
+            },
+            dragend() {
+                this.$refs['drop-zone'].style['border-color'] = '';
+                this.$refs['drop-zone'].style['border-style'] = 'dashed';
+                this.$refs['drop-zone'].style['border-image'] = '';
             }
         },
-
-    }
-
-    /**
-     * 全屏
-     */
-    function fullScreen(ele = document.documentElement) {
-        if (ele.requestFullscreen) {
-            ele.requestFullscreen();
-        } else if (ele.mozRequestFullScreen) {
-            ele.mozRequestFullScreen();
-        } else if (ele.webkitRequestFullscreen) {
-            ele.webkitRequestFullscreen();
-        } else if (ele.msRequestFullscreen) {
-            ele.msRequestFullscreen();
+        computed: {
+            //选中组件的数据字段定义
+            selectedComponentStaticFieldDefine: function () {
+                let dataField = String(this.dataVComponents[Number(this.selectedIndex)]['dataField']);
+                return {
+                    [`${dataField}`]:
+                        {
+                            type: "codemirror",
+                            name: "静态数据",
+                            options: {
+                                tabSize: 4,
+                                smartIndent: true,
+                                mode: "application/json",
+                                theme: "rubyblue",
+                                lineNumbers: true,
+                                line: true,
+                                lineWrapping: true
+                            }
+                        }
+                }
+            }
         }
+
     }
 
-    //获取两个值的比例
-    function getProportion(divisor, dividend) {
-        return (Number(divisor) / Number(dividend)).toFixed(4);
-    }
-
-    function isFullScreen() {
-        return !!(
-            document.fullscreen ||
-            document.mozFullScreen ||
-            document.webkitIsFullScreen ||
-            document.webkitFullScreen ||
-            document.msFullScreen
-        );
-    }
 
 </script>
 
@@ -472,6 +578,7 @@
         display: flex;
         flex-direction: row;
         flex-grow: 100;
+        height: 100%;
     }
 
     .drag-container {
@@ -492,7 +599,7 @@
         box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
         border-radius: 5px;
         border: 1px solid #eee;
-        background-color: #fff;
+        /*background-color: #fff;*/
     }
 
     .datav-item-close {
@@ -514,20 +621,15 @@
         color: indianred;
     }
 
+    /*拖拽中心的margin与padding都不要设置，因为会影响视图放大缩小的倍数*/
     #drop-zone {
         box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
         background-color: #fff;
         border: dashed 2px transparent;
         border-radius: 5px;
-        padding: 10px;
         width: 80%;
         margin: auto;
         transition: background-color 0.3s;
-    }
-
-    .data-view-root {
-        width: 100%;
-        height: 100%;
     }
 
     ::-webkit-scrollbar {
@@ -549,14 +651,35 @@
     .data-view-config {
         overflow-y: auto;
         padding: 10px;
-        /*position: absolute;*/
-        /*top: 70px;*/
-        /*right: 0;*/
         box-shadow: 0 5px 20px rgba(0, 0, 0, 0);
         border-radius: 5px;
         border: 1px solid #eee;
         width: 200px;
         background-color: #fff;
+    }
+
+    /deep/ .el-color-picker {
+        padding: 0 5px;
+        top: 4px
+    }
+
+    /deep/ .el-collapse-item__content {
+        padding-bottom: 0;
+    }
+
+    .data-view-setting {
+        width: 100%;
+        height: 10%;
+    }
+
+
+    .color-container {
+        border-radius: 0 4px 4px 0;
+        border: 1px solid #DCDFE6;
+    }
+
+    .setting-container {
+        margin-bottom: 5px;
     }
 
 

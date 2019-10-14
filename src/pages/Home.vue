@@ -6,7 +6,7 @@
 </template>
 
 <script>
-    import DragBoard from '../components/DragBoard'
+    import DragBoard from './DragBoard'
 
     export default {
         name: "Home",

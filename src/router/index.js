@@ -5,6 +5,7 @@ import Router from "vue-router";
 Vue.use(Router);
 
 import Home from "../pages/Home";
+import ShowView from '../pages/ShowView'
 
 export default new Router({
     mode: "hash",//去掉路径中的#
@@ -22,6 +23,12 @@ export default new Router({
                 // 标记是否为主页
                 isMain: true
             }
+        },
+        //视图展示也
+        {
+            path: "/view/:viewId",
+            name: "view",
+            component: ShowView
         }
     ]
 });

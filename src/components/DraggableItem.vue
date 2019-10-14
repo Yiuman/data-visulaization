@@ -24,7 +24,6 @@
                         </div>
                     </div>
                 </div>
-
             </el-collapse-item>
         </el-collapse>
     </div>
@@ -62,7 +61,7 @@
     }
 
     .drag-item-container {
-        height: 100%;
+        /*height: 100%;*/
         overflow-y: auto;
     }
 

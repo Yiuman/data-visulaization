@@ -1,6 +1,6 @@
 <template>
     <div class="datav-view" :style="dataVStyle">
-        <div class="datav-container" style="padding: 10px">
+        <div class="datav-container">
             <div class="datav-view-block"
                  v-for="(dataVComponent,index) in dataVComponents"
                  :key="index"
@@ -28,10 +28,7 @@
             dataVStyle: {
                 type: Object,
                 default() {
-                    return {
-                        width: screen.width,
-                        height: screen.height
-                    }
+                    return {}
                 }
             },
             dataVComponents: {

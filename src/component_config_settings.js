@@ -1,17 +1,19 @@
 //组件的配置项设置
-export const CONFIG_SETTINGS = {
+import {getDataSourceType} from "./request";
+
+export const COMPONENT_SETTINGS = {
     //折线图配置
     line: {
         settings: {
             metrics: {
                 type: 'input',
                 name: '指标',
-                dataType:Array,
+                dataType: Array,
             },
             dimension: {
                 type: 'input',
                 name: '维度',
-                dataType:Array,
+                dataType: Array,
             },
             area: {
                 type: 'switch',
@@ -21,16 +23,25 @@ export const CONFIG_SETTINGS = {
     }
 };
 
-// 全局样色
+// 全局样式
 export const GLOBAL_STYLE = {
     'background-color': {
         type: 'color',
         name: '背景颜色',
+    },
+    'background-image': {
+        type: 'upload',
+        name: '背景图',
+        options: {
+            name: 'file',
+            action: '/api/dataV/upload',
+            limit: 1
+        },
     }
 };
 
 //样式
-export const STYLE = {
+export const COMPONENT_STYLE = {
     'background-color': {
         type: 'color',
         name: '背景颜色',
@@ -58,33 +69,55 @@ export const DATA_SOURCE = {
     type: {
         name: '数据源类型',
         type: 'select',
-        values: [
-            {
-                value: 0,
-                label: 'api接口'
-            },
-            {
-                value: 1,
-                label: '静态数据'
-            },
-            {
-                value: 2,
-                label: 'SQL'
-            }
-        ]
+        values: []
     },
     api: {
         type: 'input',
-        name: '接口',
+        name: 'api',
         value: '',
-        inputType:'textarea',
-        with:'type=0'
+        with: 'type=API'
     },
+    //静态数据直接保存在组件里面吧~
+    // static: {
+    //     type: 'codemirror',
+    //     name: '静态数据',
+    //     value: '',
+    //     with: 'type=1',
+    //     options: {
+    //         tabSize: 4,
+    //         mode: 'application/json',
+    //         theme: 'rubyblue',
+    //         lineNumbers: true,
+    //         line: true,
+    //     }
+    // },
     sql: {
-        type: 'input',
+        type: 'codemirror',
         name: 'SQL脚本',
         value: '',
-        inputType:'textarea',
-        with:'type=2'
+        inputType: 'textarea',
+        with: 'type=SQL',
+        options: {
+            tabSize: 4,
+            mode: 'text/x-sql',
+            theme: 'rubyblue',
+            lineNumbers: true,
+            line: true,
+            textWrapping: true
+        }
+    },
+    webSocket:{
+        type: 'input',
+        name: '表名',
+        value: '',
+        with: 'type=WebSocket'
     }
 };
+
+function dataSourece() {
+    getDataSourceType().then(result => {
+        DATA_SOURCE.type.values = result;
+    })
+}
+
+dataSourece();
