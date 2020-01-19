@@ -106,7 +106,7 @@ export const DATA_SOURCE = {
             textWrapping: true
         }
     },
-    webSocket:{
+    webSocket: {
         type: 'input',
         name: '表名',
         value: '',
@@ -117,6 +117,8 @@ export const DATA_SOURCE = {
 function dataSourece() {
     getDataSourceType().then(result => {
         DATA_SOURCE.type.values = result;
+    }).catch(err => {
+        window.console.warn(err);
     })
 }
 

@@ -3,7 +3,7 @@
  * 用于保存视图后，再次渲染数据的时候进行处理
  */
 export const process = {
-    lineProcesser: (data) => {
+    lineProcessor: (data) => {
         return data.map(({...data,userProcess:true}))
     }
 };

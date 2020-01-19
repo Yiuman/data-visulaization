@@ -65,11 +65,7 @@ export function isFullScreen() {
  * @param unit
  */
 export function getSizeNumberWithUnit(sizeObject, unit = 'px') {
-    if (String(sizeObject).endsWith(unit)) {
-        return sizeObject.substring(0, sizeObject.length - 2)
-    }
-
-    return sizeObject;
+    return String(sizeObject).endsWith(unit)?sizeObject.substring(0, sizeObject.length - 2):sizeObject;
 
 }
 

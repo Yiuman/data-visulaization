@@ -5,7 +5,8 @@
                      v-bind="carouselBind">
             <el-carousel-item v-for="(carouselItem,index) in carouselItems" :key="index" class="carousel-item">
                 <div class="comp-container">
-                    <component :is="carouselItem.componentName" v-bind="carouselItem.data"></component>
+                    <component :is="carouselItem.componentName" v-bind="carouselItem.data">
+                    </component>
                 </div>
             </el-carousel-item>
         </el-carousel>

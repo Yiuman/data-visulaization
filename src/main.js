@@ -11,7 +11,7 @@ import DataTable from './components/DataTable'
 import Carousel from './components/DataCarousel'
 import DataText from './components/DataText'
 import DataCustomSlot from './components/DataCustomSlot'
-
+import 'default-passive-events'
 import ECharts from 'vue-echarts'
 // Map of China
 import chinaMap from './data/china.json'

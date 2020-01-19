@@ -7,8 +7,10 @@
             </div>
 
             <div class="custom-container" v-for="(custom,index) in customMix" :key="index">
-                <component style="height: 100%;width: 100%;clear: both" class="custom-item" :is="custom.componentName"
-                           v-bind="custom.data"></component>
+                <component style="height: 100%;width: 100%;clear: both" class="custom-item"
+                           :is="custom.componentName"
+                           v-bind="custom.data">
+                </component>
             </div>
         </div>
 

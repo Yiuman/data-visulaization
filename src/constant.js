@@ -87,7 +87,7 @@ export const DRAGGABLE_ITEMS = [
             name: '折线图',
             type: 'line',
             componentName: 've-line',
-            hasDataSource: true,
+            useDataSource: true,
             dataField: 'data'
         }, {
             id: '2',

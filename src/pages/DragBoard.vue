@@ -6,9 +6,9 @@
                     Data-Visualization
                 </div>
                 <el-row class="top-button-row">
-                    <el-button @click="preview" type="info" icon="el-icon-view" circle></el-button>
-                    <el-button @click="fullWindow" type="info" icon="el-icon-full-screen" circle></el-button>
-                    <el-button @click="saveDataVisualiew" type="info" icon="el-icon-finished" circle></el-button>
+                    <el-button @click="preview" type="info" icon="el-icon-view" circle/>
+                    <el-button @click="fullWindow" type="info" icon="el-icon-full-screen" circle/>
+                    <el-button @click="saveDataVisualiew" type="info" icon="el-icon-finished" circle/>
                 </el-row>
 
             </el-header>
@@ -17,7 +17,7 @@
                     <div class="drag-board-row">
                         <!--拖拽组件区-->
                         <div class="draggable-list">
-                            <DraggableItem v-on:dragstart="dragstart" v-on:dragend="dragend"></DraggableItem>
+                            <DraggableItem v-on:dragstart="dragstart" v-on:dragend="dragend"/>
                         </div>
                         <!--拖拽中心,非预览状态-->
                         <div class="drag-container" ref="drag-container">
@@ -30,6 +30,7 @@
                                      v-for="(dataVComponent,index) in dataVComponents"
                                      :key="index"
                                      :id="dataVComponent.domId"
+                                     :class="index===selectedIndex?'datav-item-selected':''"
                                      :style="dataVComponent.style"
                                      style="padding: 15px"
                                      :ref="dataVComponent.domId"
@@ -39,7 +40,7 @@
                                     <div class="datav-item-close"
                                          :ref="dataVComponent.domId+'close'"
                                          :style="index===selectedIndex?'':'display: none;'">
-                                        <i class="el-icon-close" aria-hidden="true" @click="deleteDataVItem(index)"></i>
+                                        <i class="el-icon-close" aria-hidden="true" @click="deleteDataVItem(index)"/>
                                     </div>
                                     <component :is="dataVComponent.componentName"
                                                :ref="'chart_'+index"
@@ -58,14 +59,15 @@
                                         <FieldRender :field-define="configSettings.globalStyle"
                                                      :bind-key="viewId"
                                                      :bind-data="dropZoneStyle"
-                                                     @beforeUpload="beforeUpload"></FieldRender>
+                                                     @beforeUpload="beforeUpload"/>
                                     </el-collapse-item>
                                     <div v-if="dataVComponents[selectedIndex]">
                                         <el-collapse-item title="组件样式" name="style">
                                             <FieldRender :field-define="configSettings.componentStyle"
                                                          :bind-data="dataVComponents[selectedIndex].style"
                                                          :bind-key="dataVComponents[selectedIndex].componentId"
-                                                         @beforeUpload="beforeUpload"></FieldRender>
+                                                         @beforeUpload="beforeUpload">
+                                            </FieldRender>
                                         </el-collapse-item>
 
                                         <el-collapse-item title="组件配置项" name="config"
@@ -74,7 +76,8 @@
                                                     :field-define="configSettings.componentSettings[dataVComponents[selectedIndex].type] || {}"
                                                     :bind-data="dataVComponents[selectedIndex].data"
                                                     :bind-key="dataVComponents[selectedIndex].componentId"
-                                                    @beforeUpload="beforeUpload"></FieldRender>
+                                                    @beforeUpload="beforeUpload">
+                                            </FieldRender>
                                         </el-collapse-item>
 
                                         <el-collapse-item title="组件数据源"
@@ -104,8 +107,9 @@
 
         <!--视图区划，用于预览-->
         <div class="data-view-root" ref="data-view-root" id="data-view-root" v-show="isPreview">
-            <DataView ref="data-view-component" :dataVStyle="previewStyle"
-                      :dataVComponents="dataVComponents"></DataView>
+            <DataView ref="data-view-component"
+                      :dataVStyle="previewStyle"
+                      :dataVComponents="dataVComponents"/>
         </div>
     </div>
 </template>

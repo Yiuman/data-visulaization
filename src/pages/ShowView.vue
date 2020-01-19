@@ -1,7 +1,10 @@
 <template>
     <div class="show-view">
         <div class="data-view-show" ref="data-view-show" id="data-view-show">
-            <DataView v-if="loaded" :dataVComponents="dataVComponents" :dataVStyle="dataVStyle"></DataView>
+            <DataView v-if="loaded"
+                      :dataVComponents="dataVComponents"
+                      :dataVStyle="dataVStyle">
+            </DataView>
         </div>
     </div>
 

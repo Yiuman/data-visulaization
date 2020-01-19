@@ -1,11 +1,12 @@
 <template>
     <div class="draggable-component">
         <el-collapse v-model="activeNames">
-            <el-collapse-item v-for=" (draggableItem , index) in draggableItems" :key="draggableItem.id"
+            <el-collapse-item v-for=" (draggableItem , index) in draggableItems"
+                              :key="draggableItem.id"
                               :index="String(index+1)" :name="draggableItem.title">
                 <template slot="title">
                     <div class="type-title">
-                        <i class="header-icon" :class="draggableItem.icon"></i>
+                        <i class="header-icon" :class="draggableItem.icon"/>
                         {{draggableItem.title}}
                     </div>
                 </template>
@@ -16,7 +17,7 @@
                              @dragend="dragend">
                             <el-card :body-style="{ padding: '0px' }" shadow="hover">
                                 <img :src="dragItem.img?dragItem.img:require('../assets/images/'+dragItem.type+'.jpg')"
-                                     class="image">
+                                     class="image" alt="">
                                 <div class="item-title">
                                     <span>{{dragItem.name}}</span>
                                 </div>

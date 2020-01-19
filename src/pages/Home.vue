@@ -1,6 +1,6 @@
 <template>
     <div class="home">
-        <DragBoard></DragBoard>
+        <DragBoard/>
     </div>
 
 </template>

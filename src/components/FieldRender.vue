@@ -39,7 +39,8 @@
                         {{fieldDefine[key].name}}
                     </div>
                     <div class="color-container">
-                        <el-color-picker size="small" v-model="bindData[key]"></el-color-picker>
+                        <el-color-picker size="small" v-model="bindData[key]">
+                        </el-color-picker>
                     </div>
                 </div>
 
@@ -62,7 +63,8 @@
                         {{fieldDefine[key].name}}
                     </div>
                     <div class="switch-container">
-                        <el-switch v-model="bindData[key]" style="margin:0 10px"></el-switch>
+                        <el-switch v-model="bindData[key]" style="margin:0 10px">
+                        </el-switch>
                     </div>
                 </div>
 
@@ -89,7 +91,7 @@
                                :file-list="keyFileList[key]"
                                :on-preview="handlePreview">
                         <div class="el-upload__text" style="color: #909399">{{fieldDefine[key].name}}</div>
-                        <i class="el-icon-upload"></i>
+                        <i class="el-icon-upload"/>
                         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
                         <div v-if="fieldDefine[key].options.accept" class="el-upload__tip" slot="tip">
                             只能上传({{ [key].options.accept}})文件，且不超过500kb
